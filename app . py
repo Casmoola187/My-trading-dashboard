@@ -1,0 +1,59 @@
+import streamlit as st
+import pandas as pd
+import numpy as np
+import plotly.express as px
+
+# 1. Configure the Streamlit Page
+st.set_page_config(
+    page_title="Crypto & Stock Trading Dashboard",
+    page_icon="📈",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# 2. Setup Dashboard Header
+st.title("📈 Advanced Trading Dashboard")
+st.markdown("---") # Fixed syntax error line
+
+# 3. Create Sidebar Filters
+st.sidebar.header("Dashboard Settings")
+asset_type = st.sidebar.selectbox("Select Asset Class", ["Crypto", "Stocks", "Forex"])
+ticker = st.sidebar.text_input("Enter Ticker Symbol", value="BTC" if asset_type == "Crypto" else "AAPL")
+timeframe = st.sidebar.selectbox("Timeframe", ["1H", "4H", "1D", "1W"])
+
+# 4. Generate Mock Market Data
+np.random.seed(42)
+dates = pd.date_range(end=pd.Timestamp.now(), periods=100, freq='D')
+close_prices = 50000 + np.cumsum(np.random.normal(100, 500, size=100))
+volumes = np.random.randint(1000, 5000, size=100)
+
+df = pd.DataFrame({
+    "Date": dates,
+    "Close": close_prices,
+    "Volume": volumes
+})
+
+# 5. Display Key Performance Indicators (KPIs)
+current_price = df["Close"].iloc[-1]
+price_change = df["Close"].iloc[-1] - df["Close"].iloc[-2]
+pct_change = (price_change / df["Close"].iloc[-2]) * 100
+
+kpi1, kpi2, kpi3 = st.columns(3)
+kpi1.metric(label=f"Current {ticker} Price", value=f"${current_price:,.2f}")
+kpi2.metric(label="24h Price Change", value=f"${price_change:+,.2f}", delta=f"{pct_change:+.2f}%")
+kpi3.metric(label="24h Trading Volume", value=f"{df['Volume'].iloc[-1]:,}")
+
+st.markdown("---")
+
+# 6. Render Interactive Charts
+chart_col, data_col = st.columns([2, 1])
+
+with chart_col:
+    st.subheader("Price Performance History")
+    fig = px.line(df, x="Date", y="Close", title=f"{ticker} Live Chart Visualizer")
+    fig.update_layout(template="plotly_dark", xaxis_title="Timeline", yaxis_title="Price ($)")
+    st.plotly_chart(fig, use_container_width=True)
+
+with data_col:
+    st.subheader("Recent Historical Logs")
+    st.dataframe(df.tail(10), use_container_width=True)
